@@ -44,10 +44,14 @@
 
 		for (var i = 1; i <= n; i++) {
 			discount = 1;
-			discount = discount/Math.pow((1 + rate), n);
+			discount = discount/Math.pow((1 + rate), i);
+			console.log("discount: " + i + " " + discount);
 
 			duration += i*discount*coupon;
+			console.log("duration: " + i + " " + duration);
 			value += discount*coupon;
+			console.log("value: " + i + " " + value);
+
 			if (i==n) {
 				value += discount*face_value;
 				duration += n*discount*face_value;
