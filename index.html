@@ -58,7 +58,7 @@
 		document.getElementById("result_2").innerText = "Modified Duration: " + modified_duration.toFixed(4);
 
 		var price_change = -modified_duration*0.0001*100;
-		document.getElementById("result_3").innerText = "債券價格變動百分比: " + price_change.toFixed(4);
+		document.getElementById("result_3").innerText = "債券價格變動百分比: " + price_change.toFixed(4) +"%";
 
 		setTimeout(function(){
 		    $.LoadingOverlay("hide");
