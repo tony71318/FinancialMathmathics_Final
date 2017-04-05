@@ -5,7 +5,7 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>財工_HW2</title>
+	<title>財工_HW3</title>
 
 	<!-- 套用bootstrap -->		<!-- 更改網址來更新css -->
 	<!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
@@ -31,47 +31,16 @@
 
 		$.LoadingOverlay("show");
 
-		var bond_yield = document.getElementById("bond_yield").value/100;
+		var n = document.getElementById("n");
+		console.log("n: " + n);
+		var coupon = document.getElementById("coupon");
+		console.log("n: " + n);
 		var rate = document.getElementById("rate").value/100;
+		console.log("n: " + n);
 
-		var n=0,coupon=0,value=0,discount=0,day_count=0;
+		var value=0,discount=0,duration=0;
 
-		day_count = func_day_count();
-		if (day_count == "Maturity date must be later than Settlement date!") {
-			$.LoadingOverlay("hide");
-			alert("Maturity date must be later than Settlement date!");
-			document.getElementById("result").innerText = "Maturity date must be later than Settlement date!";
-			return;
-		}
-		console.log("day_count: "+day_count);
-
-		n = Math.ceil(day_count/180);
-		w = day_count%180;
-		w /= 180;
-		console.log("n: "+n);
-		console.log("w: "+w);
 		
-		coupon = rate/2*100;
-		console.log("coupon: "+coupon);
-
-		var y = 1 + (bond_yield/2); //1+r
-		console.log("y: "+y);
-		
-		for (var i = 1; i <= n; i++) {
-			discount = 1/Math.pow(y, i-(1-w));
-			console.log("discount: "+discount);
-			value += discount*coupon;
-			console.log("value: "+value);
-
-			if (i==n) {
-				var pvface = 100/Math.pow(y, i-(1-w));
-				value += pvface;
-				console.log("value: "+value);
-			}
-		}
-
-		var accrued_interest = coupon*(1-w);
-		var clean_price = value - accrued_interest;
 
 		setTimeout(function(){
 		    $.LoadingOverlay("hide");
@@ -83,47 +52,6 @@
 		console.log(value.toFixed(4));
 	}
 
-	function func_day_count() {
-
-		var date_option = document.getElementsByName("optradio");
-
-		for (var i = 0, length = date_option.length; i < length; i++) {
-		    if (date_option[i].checked) {
-		        date_option = date_option[i].value;
-				console.log("date_option: "+date_option);        
-		        break;
-		    }
-		}
-
-		var maturity = document.getElementById("maturity").value;
-		var maturity = new Date(maturity);
-		maturity_year = maturity.getFullYear();
-		maturity_month = maturity.getMonth()+1;
-		maturity_day = maturity.getDate();       
-		console.log("maturity date: " + maturity_year +""+ maturity_month +""+ maturity_day);
-
-		var settlement = document.getElementById("settlement").value;
-		var settlement = new Date(settlement);
-		settlement_year = settlement.getFullYear();
-		settlement_month = settlement.getMonth()+1;
-		settlement_day = settlement.getDate();
-		console.log("settlement date: " + settlement_year +""+ settlement_month +""+ settlement_day);
-
-		if (maturity<settlement) {
-			day_count = "Maturity date must be later than Settlement date!";
-			return day_count;
-		}
-
-		var day_count = 0;
-		if (date_option==0) {
-			day_count = 360*(maturity_year　-　settlement_year) + 30*(maturity_month - settlement_month) + (maturity_day - settlement_day);
-		}else if (date_option==1) {
-			var timeDiff = Math.abs(maturity.getTime() - settlement.getTime());
-			day_count = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
-		}
-		return day_count;
-	}
-
 </script>
 
 <body>
@@ -132,52 +60,37 @@
 		<div class="container" id="margin">
 			<div class="row main">
 				<div class="main-login main-center">
-					<h1 class="title text-center">債券價格計算</h1>
+					<h1 class="title text-center">Macaulay duration計算</h1>
 					<form class="form-horizontal" method="post" action="javascript:calculate();">
 						
 						<div class="form-group">
-							<label for="maturity" class="cols-sm-2 control-label">Bond maturity date:</label>
+							<label for="n" class="cols-sm-2 control-label">請輸入期數:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
 									<span class="input-group-addon"><i class="glyphicon glyphicon-calendar" aria-hidden="true"></i></span>
-									<input type="date" class="form-control" name="maturity" id="maturity"  placeholder="Enter maturity date" required/>
+									<input type="date" class="form-control" name="n" id="n"  placeholder="期數" required/>
 								</div>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label for="settlement" class="cols-sm-2 control-label">Settlement date:</label>
+							<label for="coupon" class="cols-sm-2 control-label">請輸入債息:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
 									<span class="input-group-addon"><i class="glyphicon glyphicon-calendar" aria-hidden="true"></i></span>
-									<input type="date" class="form-control" name="settlement" id="settlement"  placeholder="Enter settlement date" required/>
+									<input type="date" class="form-control" name="coupon" id="coupon"  placeholder="債息" required/>
 								</div>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label for="bond_yield" class="cols-sm-2 control-label">Bond yield:</label>
+							<label for="rate" class="cols-sm-2 control-label">請輸入利率:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
 									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="bond_yield" id="bond_yield"  placeholder="Enter bond yield  Ex: 3%" required min="0" max="100"/>
+									<input type="number" class="form-control" name="rate" id="rate"  placeholder="利率" required min="0" max="100"/>
 								</div>
 							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="rate" class="cols-sm-2 control-label">Coupon rate:</label>
-							<div class="cols-sm-10">
-								<div class="input-group">
-									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="rate" id="rate"  placeholder="Enter coupon rate  Ex: 5%" required min="0" max="100"/>
-								</div>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label class="radio-inline"><input type="radio" value="0" name="optradio" required>30/360</label>
-							<label class="radio-inline"><input type="radio" value="1" name="optradio">Actual/Actual</label>
 						</div>
 
 						<div class="form-group ">
