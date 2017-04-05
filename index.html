@@ -32,25 +32,18 @@
 		$.LoadingOverlay("show");
 
 		var face_value = document.getElementById("face_value").value;
-		console.log("face_value: " + face_value);
 		var n = document.getElementById("n").value;
-		console.log("n: " + n);
 		var coupon = document.getElementById("coupon").value;
-		console.log("coupon: " + coupon);
 		var rate = document.getElementById("rate").value/100;
-		console.log("rate: " + rate);
 
 		var value=0,discount=0,duration=0;
 
 		for (var i = 1; i <= n; i++) {
 			discount = 1;
 			discount = discount/Math.pow((1 + rate), i);
-			console.log("discount: " + i + " " + discount);
 
 			duration += i*discount*coupon;
-			console.log("duration: " + i + " " + duration);
 			value += discount*coupon;
-			console.log("value: " + i + " " + value);
 
 			if (i==n) {
 				value += discount*face_value;
@@ -59,7 +52,6 @@
 		}
 
 		duration = duration/value;
-		console.log("duration: " + duration);
 
 		setTimeout(function(){
 		    $.LoadingOverlay("hide");
