@@ -31,25 +31,39 @@
 
 		$.LoadingOverlay("show");
 
-		var n = document.getElementById("n");
+		var face_value = document.getElementById("face_value").value;
+		console.log("face_value: " + face_value);
+		var n = document.getElementById("n").value;
 		console.log("n: " + n);
-		var coupon = document.getElementById("coupon");
-		console.log("n: " + n);
+		var coupon = document.getElementById("coupon").value;
+		console.log("coupon: " + coupon);
 		var rate = document.getElementById("rate").value/100;
-		console.log("n: " + n);
+		console.log("rate: " + rate);
 
 		var value=0,discount=0,duration=0;
 
-		
+		for (var i = 1; i <= n; i++) {
+			discount = 1;
+			discount = discount/Math.pow((1 + rate), n);
+
+			duration += i*discount*coupon;
+			value += discount*coupon;
+			if (i==n) {
+				value += discount*face_value;
+				duration += n*discount*face_value;
+			}
+		}
+
+		duration = duration/value;
+		console.log("duration: " + duration);
 
 		setTimeout(function(){
 		    $.LoadingOverlay("hide");
-		    document.getElementById("result").innerText = "Bond Value: ";
-		    document.getElementById("dirty_price").innerText = "Dirty Price: " + value.toFixed(4);
-		    document.getElementById("accrued_interest").innerText = "Accrued Interest: " + accrued_interest.toFixed(4);
-		    document.getElementById("clean_price").innerText = "Clean Price: " + clean_price.toFixed(4);
+		    document.getElementById("result").innerText = "Macaulay duration: " + duration.toFixed(4);
+		    // document.getElementById("dirty_price").innerText = "Dirty Price: " + value.toFixed(4);
+		    // document.getElementById("accrued_interest").innerText = "Accrued Interest: " + accrued_interest.toFixed(4);
+		    // document.getElementById("clean_price").innerText = "Clean Price: " + clean_price.toFixed(4);
 		}, 1000);
-		console.log(value.toFixed(4));
 	}
 
 </script>
@@ -60,15 +74,25 @@
 		<div class="container" id="margin">
 			<div class="row main">
 				<div class="main-login main-center">
-					<h1 class="title text-center">Macaulay duration計算</h1>
+					<h1 class="title text-center">Macaulay duration</h1>
 					<form class="form-horizontal" method="post" action="javascript:calculate();">
 						
+						<div class="form-group">
+							<label for="face_value" class="cols-sm-2 control-label">請輸入票面價值:</label>
+							<div class="cols-sm-10">
+								<div class="input-group">
+									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
+									<input type="number" class="form-control" name="face_value" id="face_value"  placeholder="票面價值" required/>
+								</div>
+							</div>
+						</div>
+
 						<div class="form-group">
 							<label for="n" class="cols-sm-2 control-label">請輸入期數:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
-									<span class="input-group-addon"><i class="glyphicon glyphicon-calendar" aria-hidden="true"></i></span>
-									<input type="date" class="form-control" name="n" id="n"  placeholder="期數" required/>
+									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
+									<input type="number" class="form-control" name="n" id="n"  placeholder="期數" required/>
 								</div>
 							</div>
 						</div>
@@ -77,8 +101,8 @@
 							<label for="coupon" class="cols-sm-2 control-label">請輸入債息:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
-									<span class="input-group-addon"><i class="glyphicon glyphicon-calendar" aria-hidden="true"></i></span>
-									<input type="date" class="form-control" name="coupon" id="coupon"  placeholder="債息" required/>
+									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
+									<input type="number" class="form-control" name="coupon" id="coupon"  placeholder="債息" required/>
 								</div>
 							</div>
 						</div>
@@ -97,9 +121,9 @@
 							<button type="submit" class="btn btn-primary btn-lg center-block login-button">計算</button>
 						</div>
 						<div id="result"></div>
-						<div id="dirty_price" style="padding-left: 30px"></div>
+						<!-- <div id="dirty_price" style="padding-left: 30px"></div>
 						<div id="accrued_interest" style="padding-left: 30px"></div>
-						<div id="clean_price" style="padding-left: 30px"></div>
+						<div id="clean_price" style="padding-left: 30px"></div> -->
 					</form>
 				</div>
 			</div>
