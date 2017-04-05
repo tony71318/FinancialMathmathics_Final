@@ -52,15 +52,17 @@
 		}
 
 		duration = duration/value;
+		document.getElementById("result").innerText = "Macaulay Duration: " + duration.toFixed(4);
 
 		var modified_duration = duration/(1+rate);
+		document.getElementById("result_2").innerText = "Modified Duration: " + modified_duration.toFixed(4);
+
+		var price_change = -modified_duration*0.0001*100;
+		document.getElementById("result_3").innerText = "債券價格變動百分比: " + price_change.toFixed(4);
 
 		setTimeout(function(){
 		    $.LoadingOverlay("hide");
-		    document.getElementById("result").innerText = "Macaulay Duration: " + duration.toFixed(4);
-		     document.getElementById("result_2").innerText = "Modified Duration: " + modified_duration.toFixed(4);
-		    // document.getElementById("accrued_interest").innerText = "Accrued Interest: " + accrued_interest.toFixed(4);
-		    // document.getElementById("clean_price").innerText = "Clean Price: " + clean_price.toFixed(4);
+		    
 		}, 1000);
 	}
 
@@ -120,8 +122,7 @@
 						</div>
 						<div id="result"></div>
 						<div id="result_2"></div>
-						<!-- <div id="accrued_interest" style="padding-left: 30px"></div>
-						<div id="clean_price" style="padding-left: 30px"></div> -->
+						<div id="result_3"></div>
 					</form>
 				</div>
 			</div>
