@@ -5,7 +5,7 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>財工_HW3</title>
+	<title>財工_HW5</title>
 
 	<!-- 套用bootstrap -->		<!-- 更改網址來更新css -->
 	<!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
@@ -26,44 +26,121 @@
 </head>
 
 <script>
+
+	var n;
 	
+	function add_yield_rate_input() {
+		for (var i = n; i >= 1; i--) {
+			$("#div"+i).remove();	
+		}
+
+		n = document.getElementById("n").value;	
+		if (n<1 || n>99) {
+			alert("n must between 1~99");
+			return
+		}
+
+		for(var i = 1; i <= n; i++){
+
+			$("#div_coupon").before('<div class="form-group" id="div' + i + '"><label for="yield_rate" class="cols-sm-2 control-label">第'+i+'期的yield rate:</label><div class="cols-sm-10"><div class="input-group"><span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span><input type="number" class="form-control" name="yield_rate[]" placeholder="yield rate" required  min="0" max="100"/></div></div></div>');
+		}
+	};
+
 	function calculate () {
 
 		$.LoadingOverlay("show");
 
-		var face_value = document.getElementById("face_value").value;
-		var n = document.getElementById("n").value;
-		var coupon = document.getElementById("coupon").value;
-		var rate = document.getElementById("rate").value/100;
+		var coupon = parseInt(document.getElementById("coupon").value);
+		var yield_spread = document.getElementById("yield_spread").value/100;
 
-		var value=0,discount=0,duration=0;
+		var price=0;
+		var temp_left=0,temp_right=0;
 
-		for (var i = 1; i <= n; i++) {
-			discount = 1;
-			discount = discount/Math.pow((1 + rate), i);
-
-			duration += i*discount*coupon;
-			value += discount*coupon;
-
-			if (i==n) {
-				value += discount*face_value;
-				duration += n*discount*face_value;
-			}
+		n = document.getElementById("n").value;	
+		var yield_rate_array = $("input[name^='yield_rate']");
+		var yield_rate = [];
+		for (var i = 0; i < n; i++) {		
+			yield_rate[i] = yield_rate_array[i].value/100;
 		}
 
-		duration = duration/value;
-		document.getElementById("result").innerText = "Macaulay Duration: " + duration.toFixed(4);
+		var zero_rate_riskfree = calculate_zero_rate(yield_rate,0,n,coupon);
+		zero_rate_riskfree = zero_rate_riskfree[0];
+		var zero_rate_risk = calculate_zero_rate(yield_rate,yield_spread,n,coupon);
+		zero_rate_risk = zero_rate_risk[0];
+		var risk_bond_value = zero_rate_risk[1];
 
-		var modified_duration = duration/(1+rate);
-		document.getElementById("result_2").innerText = "Modified Duration: " + modified_duration.toFixed(4) +"\n";
+		var static_spread = calculate_static_spread(zero_rate_riskfree,zero_rate_risk,risk_bond_value);
 
-		var price_change = -modified_duration*0.0001*100;
-		document.getElementById("result_3").innerText = "債券價格變動百分比: " + price_change.toFixed(4) +"% \n(change 1 basis point)";
+		document.getElementById("result").innerText = "Static Spread: " + static_spread.toFixed(8);
+
+		console.log('static_spread: ' + static_spread);
 
 		setTimeout(function(){
 		    $.LoadingOverlay("hide");
 		    
 		}, 1000);
+	}
+
+	function calculate_zero_rate(yield_rate,yield_spread,n,coupon) {
+
+		var zero_rate = [];
+		zero_rate[0] = yield_rate[0] + yield_spread;
+		for (var i = 1; i < n; i++) {
+			var bond_value = 0;
+			for (var j = 0; j <= i; j++) {
+				var discount = 1;
+				discount = discount/Math.pow((1 + yield_rate[i] +　yield_spread), j+1);
+
+				bond_value += discount*coupon;
+				if(j == i)
+					bond_value += discount*100;
+			}
+			//console.log('bond_value: ' + bond_value);
+			for (var j = 0; j < i; j++) {
+				var PV = coupon;
+				PV = PV/Math.pow((1 + zero_rate[j]), j+1);
+				bond_value = bond_value - PV;
+			}
+			console.log('bond_value: ' + bond_value);
+
+			zero_rate[i] = Math.pow((coupon+100)/bond_value,1.0/(i+1).toFixed(1)) - 1;
+		}
+		console.log("zero_rate: " + zero_rate);
+
+		return [zero_rate,bond_value];
+	}
+
+	function calculate_static_spread(zero_rate_riskfree,zero_rate_risk,risk_bond_value) {
+
+		var rate_diff = [];
+		for (var i = 0; i < zero_rate_risk.length; i++) {
+			rate_diff[i] = zero_rate_risk[i] - zero_rate_riskfree[i];
+		}
+		console.log("rate_diff: " + rate_diff);
+
+		var high = Math.max(...rate_diff);
+		console.log("high: " + high);
+		var low = Math.min(...rate_diff);
+		console.log("low: " + low);
+		var middle = 0;
+
+		while (Math.abs(high - low) >= 0.0000000001) {
+			middle = (high + low)/2;
+			var value = 0;
+			for (var i = 0; i < n; i++) {
+				value += coupon/Math.pow((1 + zero_rate_riskfree[i] + middle), i+1);
+				if (i == n) {
+					value += 100/Math.pow((1 + zero_rate_riskfree[i] + middle), i+1);
+				}
+			}
+			if (value - risk_bond_value > 0) {
+				low = middle;
+			}else{
+				high = middle;
+			}
+		}
+
+		return middle;
 	}
 
 </script>
@@ -78,41 +155,31 @@
 					<form class="form-horizontal" method="post" action="javascript:calculate();">
 						
 						<div class="form-group">
-							<label for="face_value" class="cols-sm-2 control-label">請輸入票面價值:</label>
-							<div class="cols-sm-10">
-								<div class="input-group">
-									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="face_value" id="face_value"  placeholder="票面價值" required/>
-								</div>
-							</div>
-						</div>
-
-						<div class="form-group">
 							<label for="n" class="cols-sm-2 control-label">請輸入期數:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
 									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="n" id="n"  placeholder="期數" required/>
+									<input type="number" class="form-control" name="n" id="n"  placeholder="期數" min="1" max="99" required onkeyup="add_yield_rate_input()" />
 								</div>
 							</div>
 						</div>
 
-						<div class="form-group">
+						<div class="form-group"  id="div_coupon">
 							<label for="coupon" class="cols-sm-2 control-label">請輸入債息:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
 									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="coupon" id="coupon"  placeholder="債息" required/>
+									<input type="number" class="form-control" name="coupon" id="coupon"  placeholder="債息" required value='1'/>
 								</div>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label for="rate" class="cols-sm-2 control-label">請輸入利率:</label>
+							<label for="yield_spread" class="cols-sm-2 control-label">請輸入yield spread差:</label>
 							<div class="cols-sm-10">
 								<div class="input-group">
 									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="rate" id="rate"  placeholder="利率" required min="0" max="100"/>
+									<input type="number" class="form-control" name="yield_spread" id="yield_spread"  placeholder="yield spread差" required value='5'/>
 								</div>
 							</div>
 						</div>
