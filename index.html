@@ -5,7 +5,7 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>財工_HW5</title>
+	<title>財工_Final</title>
 
 	<!-- 套用bootstrap -->		<!-- 更改網址來更新css -->
 	<!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
@@ -27,174 +27,122 @@
 
 <script>
 
-	var n;
+	r_perMonth = 0.01844/12;
+	present_value = Math.exp(-r_perMonth);
+	taiex = [7757,7758];
+	future = [7756,7760];
+	strike_price = [];
+
+	var counter = 0;
+	for (var index = 6900; index <= 8800; index+=100) {
+		if(index != 8100 && index != 8300 && index != 8500 && index != 8700){
+			strike_price[counter++]= index;
+		}
+	}
+
+	call_price = [820, 740, 630, 550, 470, 397, 307, 235, 173, 120, 79, 48.5, 15.5, 4.1, 1, 0.6];
+	call_buy_price = [820, 690, 630, 540, 445, 372, 304, 231, 173, 120, 80, 48.5, 15.5, 4.1, 1, 0.6];
+	call_sell_price = [835, 740, 645, 550, 470, 397, 307, 235, 174, 121, 81, 49, 16.5, 4.2, 2, 0.9];
+
+	put_price = [9.1, 12, 18, 25, 38.5, 55, 78, 109, 148, 194, 258, 323, 493, 0, 855, 0];
+	put_buy_price = [8.6, 12, 17, 26, 38.5, 55, 78, 109, 148, 195, 250, 323, 493, 0, 825, 0];
+	put_sell_price = [9.1, 12.5, 18, 27, 39.5, 56, 79, 110, 149, 196, 258, 332, 505, 0, 855, 0];
+
+	transaction_cost = 1;
+
+	function put_call_parity(call,put,stock,k) {
+		document.getElementById("result").innerText += "By put_call_parity:"  + "\n";
+		if (put != 0) {
+			var putPrice = call + k*present_value - stock[1];
+			var callPrice = stock[1] + put - k*present_value;
+			if (putPrice != put) {
+				if (putPrice < put) {
+					document.getElementById("result").innerText += "__賣 put & taiex, 買 call , Arbitrage Profit = " + Math.abs((put - putPrice)+(stock[0]-stock[1])-3*transaction_cost) + "\n";
+				} else {
+					document.getElementById("result").innerText += "__買 put & taiex, 賣 call , Arbitrage Profit = " + Math.abs((put - putPrice)-3*transaction_cost) + "\n";
+				}	
+			} 
+		} else {
+			document.getElementById("result").innerText += "__put price 為 0" + "\n";
+		}
+	}
+
+	function put_call_parity_future(call,put,future,k) {
+		document.getElementById("result").innerText += "By put_call_parity_future:"  + "\n";
+		if (put != 0) {
+			var putPrice = call + k*present_value - future[1];
+			var callPrice = future[1] + put - k*present_value;
+			if (putPrice < put) {
+				document.getElementById("result").innerText += "__賣 put & future, 買 call , Arbitrage Profit = " + Math.abs((putPrice - put)-3*transaction_cost) + "\n";
+			} else {
+				document.getElementById("result").innerText += "__買 put & future, 賣 call , Arbitrage Profit = " + Math.abs((putprice - p)-(f[1]-f[0])-3*transaction_cost) + "\n";
+			}
+		} else {
+			document.getElementById("result").innerText += "__put price 為 0" + "\n";
+		}
+	}
+
+	function theorem3(call,put,stock,k) {
+		document.getElementById("result").innerText += "By Theorem3:"  + "\n";
+		if (call > stock[0]) {
+			document.getElementById("result").innerText += "__賣 call, 買 stock , Arbitrage Profit = " + ((call - stock[0])-2*transaction_cost) + "\n";
+		} else if (put > k) {
+			document.getElementById("result").innerText += "__賣 put , Arbitrage Profit = " + (put-1*transaction_cost) + "\n";
+		}else {
+			document.getElementById("result").innerText += "__無套利機會" + "\n";
+		}
+	}
 	
-	function add_yield_rate_input() {
-		for (var i = n; i >= 1; i--) {
-			$("#div"+i).remove();	
+	function theorem4(call,put,stock,k) {
+		document.getElementById("result").innerText += "By Theorem4:"  + "\n";
+		if (call < Math.max(stock[1] - k*present_value , 0)) {
+			document.getElementById("result").innerText += "__買 call, 賣 stock, Arbitrage Profit = " + (Math.max((stock[1]-k*present_value),0) - call)+((stock[0]-stock[1])-2) + "\n";
+		} else {
+			document.getElementById("result").innerText += "__無套利機會" + "\n";
 		}
-
-		n = document.getElementById("n").value;	
-		if (n<1 || n>99) {
-			alert("n must between 1~99");
-			return
-		}
-
-		for(var i = 1; i <= n; i++){
-
-			$("#div_coupon").before('<div class="form-group" id="div' + i + '"><label for="yield_rate" class="cols-sm-2 control-label">第'+i+'期的yield rate:</label><div class="cols-sm-10"><div class="input-group"><span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span><input type="number" class="form-control" name="yield_rate[]" placeholder="yield rate" required  min="0" max="100"/></div></div></div>');
-		}
-	};
-
-	function calculate () {
-
-		$.LoadingOverlay("show");
-
-		var coupon = parseInt(document.getElementById("coupon").value);
-		var yield_spread = document.getElementById("yield_spread").value/100;
-
-		var price=0;
-		var temp_left=0,temp_right=0;
-
-		n = document.getElementById("n").value;	
-		var yield_rate_array = $("input[name^='yield_rate']");
-		var yield_rate = [];
-		for (var i = 0; i < n; i++) {		
-			yield_rate[i] = yield_rate_array[i].value/100;
-		}
-
-		var zero_rate_riskfree = calculate_zero_rate(yield_rate,0,n,coupon);
-		zero_rate_riskfree = zero_rate_riskfree[0];
-		var zero_rate_risk = calculate_zero_rate(yield_rate,yield_spread,n,coupon);
-		zero_rate_risk = zero_rate_risk[0];
-		var risk_bond_value = zero_rate_risk[1];
-
-		var static_spread = calculate_static_spread(zero_rate_riskfree,zero_rate_risk,risk_bond_value);
-
-		document.getElementById("result").innerText = "Static Spread: " + static_spread.toFixed(8);
-
-		console.log('static_spread: ' + static_spread);
-
-		setTimeout(function(){
-		    $.LoadingOverlay("hide");
-		    
-		}, 1000);
 	}
 
-	function calculate_zero_rate(yield_rate,yield_spread,n,coupon) {
-
-		var zero_rate = [];
-		zero_rate[0] = yield_rate[0] + yield_spread;
-		for (var i = 1; i < n; i++) {
-			var bond_value = 0;
-			for (var j = 0; j <= i; j++) {
-				var discount = 1;
-				discount = discount/Math.pow((1 + yield_rate[i] +　yield_spread), j+1);
-
-				bond_value += discount*coupon;
-				if(j == i)
-					bond_value += discount*100;
+	function theorem6(call,put,stock,k) {
+		document.getElementById("result").innerText += "By Theorem6:"  + "\n";
+		if (put != 0) {
+			if (put <  Math.max(k*present_value - stock[1] , 0)) {
+				document.getElementById("result").innerText += "__買 put, 賣 stock, Arbitrage Profit = " + ((Math.max((k*present_value -stock[1]),0) - put)-2) + "\n";
+			} else {
+				document.getElementById("result").innerText += "__無套利機會" + "\n";
 			}
-			//console.log('bond_value: ' + bond_value);
-			for (var j = 0; j < i; j++) {
-				var PV = coupon;
-				PV = PV/Math.pow((1 + zero_rate[j]), j+1);
-				bond_value = bond_value - PV;
-			}
-			console.log('bond_value: ' + bond_value);
-
-			zero_rate[i] = Math.pow((coupon+100)/bond_value,1.0/(i+1).toFixed(1)) - 1;
+		} else {
+			document.getElementById("result").innerText += "__put price 為 0" + "\n";
 		}
-		console.log("zero_rate: " + zero_rate);
-
-		return [zero_rate,bond_value];
 	}
 
-	function calculate_static_spread(zero_rate_riskfree,zero_rate_risk,risk_bond_value) {
-
-		var rate_diff = [];
-		for (var i = 0; i < zero_rate_risk.length; i++) {
-			rate_diff[i] = zero_rate_risk[i] - zero_rate_riskfree[i];
+	window.onload = function (){
+		for (var i = 0; i < strike_price.length; i++) {
+			document.getElementById("result").innerText += "履約價 = " + strike_price[i] + "\n";
+			put_call_parity(call_price[i], put_price[i], taiex, strike_price[i]);
+			put_call_parity_future(call_price[i], put_price[i], future, strike_price[i])
+			theorem3(call_price[i], put_price[i], taiex, strike_price[i])
+			theorem4(call_price[i], put_price[i], taiex, strike_price[i])
+			theorem6(call_price[i], put_price[i], taiex, strike_price[i])
+			document.getElementById("result").innerText += "\n\n";
 		}
-		console.log("rate_diff: " + rate_diff);
-
-		var high = Math.max(...rate_diff);
-		console.log("high: " + high);
-		var low = Math.min(...rate_diff);
-		console.log("low: " + low);
-		var middle = 0;
-
-		while (Math.abs(high - low) >= 0.0000000001) {
-			middle = (high + low)/2;
-			var value = 0;
-			for (var i = 0; i < n; i++) {
-				value += coupon/Math.pow((1 + zero_rate_riskfree[i] + middle), i+1);
-				if (i == n) {
-					value += 100/Math.pow((1 + zero_rate_riskfree[i] + middle), i+1);
-				}
-			}
-			if (value - risk_bond_value > 0) {
-				low = middle;
-			}else{
-				high = middle;
-			}
-		}
-
-		return middle;
 	}
 
 </script>
 
 <body>
 	
-	<!-- 計算 -->
 		<div class="container" id="margin">
 			<div class="row main">
 				<div class="main-login main-center">
-					<h1 class="title text-center">Static Spread</h1>
+					<h1 class="title text-center">Arbitrage Strategy</h1>
 					<form class="form-horizontal" method="post" action="javascript:calculate();">
-						
-						<div class="form-group">
-							<label for="n" class="cols-sm-2 control-label">請輸入期數:</label>
-							<div class="cols-sm-10">
-								<div class="input-group">
-									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="n" id="n"  placeholder="期數" min="1" max="99" required onkeyup="add_yield_rate_input()" />
-								</div>
-							</div>
-						</div>
+						<div id="result">	
 
-						<div class="form-group"  id="div_coupon">
-							<label for="coupon" class="cols-sm-2 control-label">請輸入債息:</label>
-							<div class="cols-sm-10">
-								<div class="input-group">
-									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="coupon" id="coupon"  placeholder="債息" required value='1'/>
-								</div>
-							</div>
 						</div>
-
-						<div class="form-group">
-							<label for="yield_spread" class="cols-sm-2 control-label">請輸入yield spread差:</label>
-							<div class="cols-sm-10">
-								<div class="input-group">
-									<span class="input-group-addon"><i class="glyphicon glyphicon-stats" aria-hidden="true"></i></span>
-									<input type="number" class="form-control" name="yield_spread" id="yield_spread"  placeholder="yield spread差" required value='5'/>
-								</div>
-							</div>
-						</div>
-
-						<div class="form-group ">
-							<button type="submit" class="btn btn-primary btn-lg center-block login-button">計算</button>
-						</div>
-						<div id="result"></div>
-						<div id="result_2"></div>
-						<div id="result_3"></div>
 					</form>
 				</div>
 			</div>
 		</div>
-		<!-- 計算結束 -->
 
 </body>
 

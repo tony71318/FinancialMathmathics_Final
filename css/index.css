@@ -6,7 +6,7 @@
  * General styles
  */
 
-@import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+/*@import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);*/
 
 body, html{
     background:url(../images/bg2.jpg) no-repeat center top;
@@ -59,7 +59,7 @@ input::-webkit-input-placeholder {
 
 .main-center{
  	margin: 0 auto;
- 	max-width: 330px;
+ 	max-width: 660px;
     padding: 20px 40px 30px 40px;
 
 }
